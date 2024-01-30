@@ -10,6 +10,6 @@ def toggle_led():
 button = Button(18)
 button.when_pressed = toggle_led
 
-# while True:
-#     print("Busy doing other stuff")
-#     sleep(2)
+while True:
+    print("Busy doing other stuff")
+    sleep(2)
