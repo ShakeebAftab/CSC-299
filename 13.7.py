@@ -23,3 +23,9 @@ def get_encoder_turn():
     return result
 
 x = 0
+
+while True:
+    change = get_encoder_turn()
+    if change != 0 :
+        x = x + change
+        print(x)
