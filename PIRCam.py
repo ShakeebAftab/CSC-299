@@ -5,7 +5,7 @@ import time
 camera = PiCamera()
 camera.resolution = (1024, 768)
 
-pir_sensor = MotionSensor(4)
+pir_sensor = MotionSensor(18)
 
 def capture_image():
     timestamp = time.strftime("%Y%m%d_%H%M%S")
