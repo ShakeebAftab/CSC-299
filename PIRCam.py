@@ -9,10 +9,13 @@ pir_sensor = MotionSensor(18)
 
 def capture_image():
     timestamp = time.strftime("%Y%m%d_%H%M%S")
-    image_filename = f"motion_capture_{timestamp}.jpg"
     time.sleep(2)
-    camera.capture(image_filename)
-    print(f"Image captured: {image_filename}")
+    try:
+        image_filename = f"motion_capture_{timestamp}.jpg"
+        camera.capture(image_filename)
+        print(f"Image captured: {image_filename}")
+    except Exception as e:
+        print(f"Error capturing image: {e}")
 
 try:
     while True:
