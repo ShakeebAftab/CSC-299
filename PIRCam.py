@@ -10,7 +10,8 @@ pir_sensor = MotionSensor(18)
 def capture_image():
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     image_filename = f"motion_capture_{timestamp}.jpg"
-    camera.capture(image_filename)
+    time.sleep(2)
+    camera.capture(image_filename, timeout=10)
     print(f"Image captured: {image_filename}")
 
 try:
