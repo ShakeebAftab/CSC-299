@@ -1,38 +1,31 @@
-import RPi.GPIO as GPIO
-import time
+from gpiozero import DistanceSensor
+from time import sleep
 import VL53L1X
 
-TRIG_PIN = 17
-ECHO_PIN = 18
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(TRIG_PIN, GPIO.OUT)
-GPIO.setup(ECHO_PIN, GPIO.IN)
-
+# Initialize VL53L1X sensor
 tof = VL53L1X.VL53L1X()
 tof.start_ranging(VL53L1X.VL53L1X_LONG_RANGE_MODE)
+
+# Initialize GPIO DistanceSensor
+sensor = DistanceSensor(echo=18, trigger=17)
 
 try:
     while True:
         # Read distance from HC-SR04
-        GPIO.output(TRIG_PIN, GPIO.LOW)
-        time.sleep(0.2)  # Allow sensor to settle
-        GPIO.output(TRIG_PIN, GPIO.HIGH)
-        time.sleep(0.00001)
-        GPIO.output(TRIG_PIN, GPIO.LOW)
-        while GPIO.input(ECHO_PIN) == 0:
-            pulse_start = time.time()
-        while GPIO.input(ECHO_PIN) == 1:
-            pulse_end = time.time()
-        pulse_duration = pulse_end - pulse_start
-        distance_sr04 = pulse_duration * 17150
+        cm_sr04 = sensor.distance * 100
+        inch_sr04 = cm_sr04 / 2.54
+
+        # Read distance from VL53L1X
         distance_vl53l1x = tof.get_distance()
-        print(f"HC-SR04 Distance: {distance_sr04:.2f} cm, VL53L1X Distance: {distance_vl53l1x} mm")
-        time.sleep(1)
+
+        # Display readings
+        print("HC-SR04: {:.0f} cm, {:.0f} inches | VL53L1X: {} mm".format(cm_sr04, inch_sr04, distance_vl53l1x))
+
+        sleep(0.5)
 
 except KeyboardInterrupt:
     pass
 
 finally:
-    GPIO.cleanup()
+    # Stop VL53L1X ranging
     tof.stop_ranging()
