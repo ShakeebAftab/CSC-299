@@ -1,55 +1,48 @@
+import RPi.GPIO as GPIO
 import time
-from gpiozero import MotionSensor, OutputDevice
-from twilio.rest import Client
 
-TWILIO_ACCOUNT_SID = ""
-TWILIO_AUTH_TOKEN = ""
-TWILIO_WHATSAPP_NUMBER = ""
+GPIO.setmode(GPIO.BCM)
 
-RELAY_PIN_1 = 17
-RELAY_PIN_2 = 18
-RELAY_PIN_3 = 27
-ULTRASONIC_TRIGGER_PIN = 23
-ULTRASONIC_ECHO_PIN = 24
+TRIG_PIN = 23
+ECHO_PIN = 24
+PIN_17 = 17
+PIN_18 = 18
+PIN_27 = 27
 
-def turn_on_relays():
-    relay1.on()
-    relay2.on()
-    relay3.on()
-    print("Relays turned ON")
+GPIO.setup(TRIG_PIN, GPIO.OUT)
+GPIO.setup(ECHO_PIN, GPIO.IN)
+GPIO.setup(PIN_17, GPIO.OUT)
+GPIO.setup(PIN_18, GPIO.OUT)
+GPIO.setup(PIN_27, GPIO.OUT)
 
-def turn_off_relays():
-    relay1.off()
-    relay2.off()
-    relay3.off()
-    print("Relays turned OFF")
+def measure_distance():
+    GPIO.output(TRIG_PIN, True)
+    time.sleep(0.00001)
+    GPIO.output(TRIG_PIN, False)
 
-ultrasonic_sensor = MotionSensor(ULTRASONIC_TRIGGER_PIN, ULTRASONIC_ECHO_PIN)
-relay1 = OutputDevice(RELAY_PIN_1)
-relay2 = OutputDevice(RELAY_PIN_2)
-relay3 = OutputDevice(RELAY_PIN_3)
+    while GPIO.input(ECHO_PIN) == 0:
+        pulse_start_time = time.time()
+    while GPIO.input(ECHO_PIN) == 1:
+        pulse_end_time = time.time()
 
-client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-
-def handle_whatsapp_message(message):
-    if "on" in message.lower():
-        turn_on_relays()
-    elif "off" in message.lower():
-        turn_off_relays()
+    pulse_duration = pulse_end_time - pulse_start_time
+    distance = pulse_duration * 17150
+    return round(distance, 2)
 
 try:
     while True:
-        if ultrasonic_sensor.motion_detected:
-            turn_on_relays()
-            time.sleep(10)
+        distance = measure_distance()
+        motion_threshold = 30
 
-        messages = client.messages.list(to=TWILIO_WHATSAPP_NUMBER)
-        for message in messages:
-            handle_whatsapp_message(message.body)
-            message.delete() 
+        if distance < motion_threshold:
+            GPIO.output(PIN_17, not GPIO.input(PIN_17))
+            GPIO.output(PIN_18, not GPIO.input(PIN_18))
+            GPIO.output(PIN_27, not GPIO.input(PIN_27))
 
-        time.sleep(1)
+        time.sleep(1) 
 
 except KeyboardInterrupt:
-    print("Program terminated by user")
-    turn_off_relays()
+    print("Exiting...")
+
+finally:
+    GPIO.cleanup()
