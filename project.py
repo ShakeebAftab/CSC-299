@@ -32,6 +32,7 @@ def measure_distance():
 try:
     while True:
         distance = measure_distance()
+        print("Distance: ", distance)
         motion_threshold = 30
 
         if distance < motion_threshold:
