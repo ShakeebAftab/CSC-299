@@ -1,5 +1,7 @@
 import RPi.GPIO as GPIO
 import time
+import threading
+from twilio.rest import Client
 
 GPIO.setmode(GPIO.BCM)
 
@@ -29,10 +31,49 @@ def measure_distance():
     distance = pulse_duration * 17150
     return round(distance, 2)
 
+def send_whatsapp_message(message):
+    client = Client(account_sid, auth_token)
+    message = client.messages.create(
+                              body=message,
+                              from_=twilio_phone_number,
+                              to='whatsapp:+your_phone_number'
+                          )
+
+def process_whatsapp_messages():
+    while True:
+        messages = client.messages.list(to=twilio_phone_number)
+
+        for message in messages:
+            if message.direction == 'inbound':
+                process_command(message.body)
+                message.delete()
+
+        time.sleep(1)
+
+def process_command(command):
+    if command.lower() == 'on':
+        # Toggle the relay ON
+        GPIO.output(PIN_17, GPIO.HIGH)
+        GPIO.output(PIN_18, GPIO.HIGH)
+        GPIO.output(PIN_27, GPIO.HIGH)
+    elif command.lower() == 'off':
+        # Toggle the relay OFF
+        GPIO.output(PIN_17, GPIO.LOW)
+        GPIO.output(PIN_18, GPIO.LOW)
+        GPIO.output(PIN_27, GPIO.LOW)
+
 try:
+    # Twilio Credentials
+    account_sid = 'your_account_sid'
+    auth_token = 'your_auth_token'
+    twilio_phone_number = 'whatsapp:your_twilio_whatsapp_number'
+
+    # Start a separate thread for processing WhatsApp messages
+    process_thread = threading.Thread(target=process_whatsapp_messages)
+    process_thread.start()
+
     while True:
         distance = measure_distance()
-        print("Distance: ", distance)
         motion_threshold = 30
 
         if distance < motion_threshold:
